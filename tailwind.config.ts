@@ -73,8 +73,8 @@ export default {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		fontFamily: {
-        sans: ['var(--font-geist-sans)'],
-        mono: ['var(--font-geist-mono)'],
+        sans: ['var(--font-inter)'],
+        mono: ['var(--font-roboto-mono)'],
       },
   		keyframes: {
   			'accordion-down': {

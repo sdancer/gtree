@@ -1,15 +1,15 @@
 import type { Metadata } from 'next';
-import { GeistSans, GeistMono } from 'next/font/google'; // Corrected import
+import { Inter, Roboto_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"; // Keep Toaster here for global availability
 
-const geistSans = GeistSans({ // Corrected instantiation
-  variable: '--font-geist-sans',
+const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
 });
 
-const geistMono = GeistMono({ // Corrected instantiation
-  variable: '--font-geist-mono',
+const roboto_mono = Roboto_Mono({
+  variable: '--font-roboto-mono',
   subsets: ['latin'],
 });
 
@@ -25,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
+      <body className={`${inter.variable} ${roboto_mono.variable} antialiased bg-background text-foreground`}>
         {children}
         <Toaster />
       </body>
