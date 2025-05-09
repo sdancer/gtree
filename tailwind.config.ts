@@ -43,7 +43,7 @@ export default {
   			},
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
-        'input-border': 'hsl(var(--input-border))', // Added for specific input borders
+        'input-border': 'hsl(var(--input-border))', 
   			ring: 'hsl(var(--ring))',
   			chart: {
   				'1': 'hsl(var(--chart-1))',
@@ -62,7 +62,6 @@ export default {
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
   			},
-        // Plan Weaver specific colors from CSS vars
         'plan-node-bg': 'hsl(var(--plan-node-bg))',
         'plan-node-text': 'hsl(var(--plan-node-text))',
         'plan-node-border': 'hsl(var(--plan-node-border))',
@@ -101,47 +100,97 @@ export default {
       typography: (theme: (path: string) => string) => ({
         DEFAULT: {
           css: {
-            color: theme('colors.foreground'),
-            h1: { color: theme('colors.foreground') },
-            h2: { color: theme('colors.foreground') },
-            h3: { color: theme('colors.foreground') },
-            strong: { color: theme('colors.foreground') },
-            // Add other elements if needed
+            // Default prose styles (effectively dark theme now)
+            '--tw-prose-body': theme('colors.foreground'), // Light gray text
+            '--tw-prose-headings': theme('colors.foreground'),
+            '--tw-prose-lead': theme('colors.foreground'),
+            '--tw-prose-links': theme('colors.primary.DEFAULT'), // Green links
+            '--tw-prose-bold': theme('colors.foreground'),
+            '--tw-prose-counters': theme('colors.muted.foreground'),
+            '--tw-prose-bullets': theme('colors.muted.foreground'),
+            '--tw-prose-hr': theme('colors.border'),
+            '--tw-prose-quotes': theme('colors.foreground'),
+            '--tw-prose-quote-borders': theme('colors.primary.DEFAULT'),
+            '--tw-prose-captions': theme('colors.muted.foreground'),
+            '--tw-prose-code': theme('colors.foreground'), // Monospace code text color
+            '--tw-prose-pre-code': theme('colors.foreground'),
+            '--tw-prose-pre-bg': theme('colors.secondary.DEFAULT'), // Background for code blocks (darker blue)
+            '--tw-prose-th-borders': theme('colors.border'),
+            '--tw-prose-td-borders': theme('colors.border'),
+            
+            // Inverted prose styles (for light theme context if dark:prose-invert is used, or if 'dark' class is removed from html)
+            // These ensure readability on a light background.
+            '--tw-prose-invert-body': theme('colors.card.foreground'), // This was theme('colors.background') before for invert, which was wrong
+                                                                   // Now this will be light gray text, which is also not good for light background.
+                                                                   // It should be a dark text for light backgrounds.
+                                                                   // Let's use a specific dark text. The initial theme had `card-foreground: 0 0% 10.8%;` for light theme.
+                                                                   // Since we removed light theme variables, we define it here or use a generic dark text.
+                                                                   // For now, using a hardcoded darkish gray if card-foreground is light.
+                                                                   // The card-foreground is `hsl(0, 0%, 90%)` which is light.
+                                                                   // So `--tw-prose-invert-body` should be something like `hsl(0, 0%, 20%)`
+                                                                   // Let's assume `text-foreground` of the body of light theme was `hsl(0 0% 10.8%)`.
+            // Corrected Invert Colors (for light backgrounds, when 'dark:prose-invert' is active on a light background element, or 'prose' on light html)
+            // Since dark is default, 'dark:prose-invert' means we ARE in dark mode and want to apply inverted (light text) styles.
+            // The initial request was about unreadable white font in PREVIEW. Preview bg is `bg-input`.
+            // In dark mode, `bg-input` is dark. `dark:prose-invert` is active. We need light text.
+            // `--tw-prose-invert-body` should be light. `theme('colors.foreground')` is correct (light gray).
+
+            // Let's trace:
+            // HTML class="dark"
+            // MarkdownRenderer -> `prose dark:prose-invert`
+            // `dark:prose-invert` is active. It uses `--tw-prose-invert-*` variables.
+            // So, `--tw-prose-invert-body` should be light colored. `theme('colors.foreground')` is light gray (good).
+            // And `--tw-prose-body` (used if NOT `dark:prose-invert`) should be dark colored.
+            // `theme('hsl(0,0%,20%)')` or a specific dark text variable.
+            // Original light theme `card-foreground` was `0 0% 10.8%`.
+            
+            // Base prose (used when `dark:prose-invert` is NOT active, e.g., if you had a light section in dark mode)
+            // This should be dark text on light background.
+            '--tw-prose-body': 'hsl(0, 0%, 20%)', // Dark gray for body text
+            '--tw-prose-headings': 'hsl(0, 0%, 15%)', // Slightly darker for headings
+            '--tw-prose-lead': 'hsl(0, 0%, 25%)',
+            '--tw-prose-links': theme('colors.primary.DEFAULT'), // Green links
+            '--tw-prose-bold': 'hsl(0, 0%, 15%)',
+            '--tw-prose-counters': 'hsl(0, 0%, 40%)',
+            '--tw-prose-bullets': 'hsl(0, 0%, 40%)',
+            '--tw-prose-hr': theme('colors.border'), // Use dark theme border, or a light theme one like `hsl(0,0%,85%)`
+            '--tw-prose-quotes': 'hsl(0, 0%, 20%)',
+            '--tw-prose-quote-borders': theme('colors.primary.DEFAULT'),
+            '--tw-prose-captions': 'hsl(0, 0%, 40%)',
+            '--tw-prose-code': 'hsl(0, 0%, 20%)',
+            '--tw-prose-pre-code': 'hsl(0, 0%, 20%)',
+            '--tw-prose-pre-bg': 'hsl(0, 0%, 92%)', // Light gray background for code blocks
+            '--tw-prose-th-borders': 'hsl(0,0%,80%)',
+            '--tw-prose-td-borders': 'hsl(0,0%,80%)',
+
+            // Inverted prose (used when `dark:prose-invert` is active, i.e. for dark backgrounds)
+            '--tw-prose-invert-body': theme('colors.foreground'), // Light gray from dark theme
+            '--tw-prose-invert-headings': theme('colors.foreground'),
+            '--tw-prose-invert-lead': theme('colors.foreground'),
+            '--tw-prose-invert-links': theme('colors.primary.DEFAULT'),
+            '--tw-prose-invert-bold': theme('colors.foreground'),
+            '--tw-prose-invert-counters': theme('colors.muted.foreground'),
+            '--tw-prose-invert-bullets': theme('colors.muted.foreground'),
+            '--tw-prose-invert-hr': theme('colors.border'),
+            '--tw-prose-invert-quotes': theme('colors.foreground'),
+            '--tw-prose-invert-quote-borders': theme('colors.primary.DEFAULT'),
+            '--tw-prose-invert-captions': theme('colors.muted.foreground'),
+            '--tw-prose-invert-code': theme('colors.foreground'),
+            '--tw-prose-invert-pre-code': theme('colors.foreground'),
+            '--tw-prose-invert-pre-bg': theme('colors.secondary.DEFAULT'), // Darker blue bg for code blocks
+            '--tw-prose-invert-th-borders': theme('colors.border'),
+            '--tw-prose-invert-td-borders': theme('colors.border'),
           },
         },
-        sm: { // For smaller prose like in MarkdownRenderer
+        sm: { 
           css: {
-             p: {
-              marginTop: '0.25em',
-              marginBottom: '0.25em',
-            },
-            h1: {
-              marginTop: '0.5em',
-              marginBottom: '0.25em',
-            },
-             h2: {
-              marginTop: '0.4em',
-              marginBottom: '0.2em',
-            },
-             h3: {
-              marginTop: '0.3em',
-              marginBottom: '0.1em',
-            },
-             ul: {
-              marginTop: '0.25em',
-              marginBottom: '0.25em',
-            },
-            li: {
-              marginTop: '0.1em',
-              marginBottom: '0.1em',
-            },
+             p: { marginTop: '0.25em', marginBottom: '0.25em' },
+             h1: { marginTop: '0.5em', marginBottom: '0.25em' },
+             h2: { marginTop: '0.4em', marginBottom: '0.2em' },
+             h3: { marginTop: '0.3em', marginBottom: '0.1em' },
+             ul: { marginTop: '0.25em', marginBottom: '0.25em' },
+             li: { marginTop: '0.1em', marginBottom: '0.1em' },
           }
-        },
-        invert: { // For dark mode if text is on a light background still
-          css: {
-            color: theme('colors.background'), // Example: if prose is on a card in dark mode
-            // ...
-          },
         },
       }),
   	}
