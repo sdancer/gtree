@@ -1,4 +1,4 @@
-import type { PlanNode, TreeData, NodeStatus, EditRecord } from '@/types';
+import { NodeStatus, type PlanNode, type TreeData, type EditRecord } from '@/types';
 
 export function generateNodeId(): string {
   return crypto.randomUUID();
