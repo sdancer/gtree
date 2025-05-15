@@ -10,7 +10,7 @@ export function TreeDisplay() {
 
   if (treeData.rootNodeIds.length === 0) {
     return (
-      <div className="flex-1 p-6 flex items-center justify-center text-center bg-card rounded-lg m-2">
+      <div className="h-full p-6 flex items-center justify-center text-center bg-card rounded-lg">
         <p className="text-muted-foreground text-lg">
           No plans yet. Click "Add Root" in the header to get started.
         </p>
@@ -19,8 +19,8 @@ export function TreeDisplay() {
   }
 
   return (
-    <ScrollArea className="flex-1 p-2 md:p-4 bg-card rounded-lg m-2">
-      <div className="space-y-2">
+    <ScrollArea className="h-full bg-card rounded-lg">
+      <div className="p-2 md:p-4 space-y-2">
         {treeData.rootNodeIds.map(rootNodeId => (
           <TreeNodeItem key={rootNodeId} nodeId={rootNodeId} level={0} />
         ))}
@@ -28,3 +28,4 @@ export function TreeDisplay() {
     </ScrollArea>
   );
 }
+
