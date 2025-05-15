@@ -7,7 +7,7 @@ import { useTree } from '@/contexts/TreeDataProvider';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
+// import { Label } from '@/components/ui/label'; // Label not explicitly used for new report section title
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { Save, Spline, Zap, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -16,8 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export function NodeEditor() {
   const { selectedNodeId, treeData, updateNode, decomposeNodeAndUpdateTree, executeNodePlanAndUpdateTree, isLoading } = useTree();
   const [content, setContent] = useState('');
-  // Status is still part of the node data, but not directly editable here anymore
-  // const [status, setStatus] = useState<NodeStatus>(NodeStatus.Pending); 
+  const [reportContent, setReportContent] = useState('Automated report will appear here.'); // Placeholder for report
 
   const node = selectedNodeId ? treeData.nodes[selectedNodeId] : null;
   const currentActionNodeId = isLoading && selectedNodeId ? selectedNodeId : null;
@@ -25,10 +24,12 @@ export function NodeEditor() {
   useEffect(() => {
     if (node) {
       setContent(node.content);
-      // setStatus(node.status);
+      // In a real scenario, reportContent might be fetched or derived based on the node
+      // For now, it just resets to placeholder or could be more sophisticated
+      setReportContent(`Automated report for node "${node.content.split('\\n')[0] || "Untitled Node"}" will appear here.`);
     } else {
       setContent('');
-      // setStatus(NodeStatus.Pending);
+      setReportContent('Automated report will appear here.');
     }
   }, [node]);
 
@@ -41,7 +42,6 @@ export function NodeEditor() {
   }
 
   const handleSave = () => {
-    // Pass only content, status is managed by AI flows or other mechanisms now
     updateNode(node.id, { content });
   };
   
@@ -49,16 +49,17 @@ export function NodeEditor() {
   const handleExecute = () => executeNodePlanAndUpdateTree(node.id);
 
   return (
-    <Card className="h-full flex flex-col overflow-hidden"> {/* Removed m-2, adjusted flex */}
+    <Card className="h-full flex flex-col overflow-hidden">
       <CardHeader>
-        <CardTitle className="truncate">Edit: {node.content.split('\\n')[0] || "Untitled Node"}</CardTitle>
-        <CardDescription>ID: {node.id}</CardDescription>
+        <CardTitle className="truncate">{node.content.split('\\n')[0] || "Untitled Node"}</CardTitle>
+        <CardDescription>ID: {node.id} | Status: {node.status}</CardDescription>
       </CardHeader>
       
       <Tabs defaultValue="edit" className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="mx-6 mt-0 mb-2 shrink-0">
           <TabsTrigger value="edit">Edit</TabsTrigger>
           <TabsTrigger value="preview">Preview</TabsTrigger>
+          <TabsTrigger value="report">Report</TabsTrigger>
         </TabsList>
         
         <TabsContent value="edit" className="flex-1 overflow-hidden px-6 pb-2 m-0">
@@ -67,7 +68,7 @@ export function NodeEditor() {
               id="node-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="font-mono bg-input text-card-foreground border-input-border h-full min-h-[300px] resize-none" // Ensure it fills space
+              className="font-mono bg-input text-card-foreground border-input-border h-full min-h-[300px] resize-none"
             />
           </ScrollArea>
         </TabsContent>
@@ -75,6 +76,13 @@ export function NodeEditor() {
           <ScrollArea className="h-full">
             <div className="p-2 border rounded-md h-full min-h-[300px] bg-input border-input-border prose dark:prose-invert max-w-none">
               <MarkdownRenderer content={content} />
+            </div>
+          </ScrollArea>
+        </TabsContent>
+        <TabsContent value="report" className="flex-1 overflow-hidden px-6 pb-2 m-0">
+          <ScrollArea className="h-full">
+            <div className="p-2 border rounded-md h-full min-h-[300px] bg-input border-input-border prose dark:prose-invert max-w-none">
+              <MarkdownRenderer content={reportContent} />
             </div>
           </ScrollArea>
         </TabsContent>

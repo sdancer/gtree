@@ -4,8 +4,8 @@ import React from 'react';
 import type { PlanNode } from '@/types';
 import { useTree } from '@/contexts/TreeDataProvider';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import MarkdownRenderer from '@/components/MarkdownRenderer';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card'; // Removed CardContent
+// import MarkdownRenderer from '@/components/MarkdownRenderer'; // No longer needed here
 import StatusIcon from '@/components/TreeDisplay/StatusIcon';
 import { Plus, Trash2, ChevronDown, ChevronRight, Zap, Spline, Edit3, Loader2 } from 'lucide-react';
 
@@ -102,11 +102,7 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({ nodeId, level }) => {
             )}
           </div>
         </CardHeader>
-        {!collapsed && node.content.split('\n').length > 1 && (
-           <CardContent className="p-3 pt-0">
-             <MarkdownRenderer content={node.content.split('\n').slice(1).join('\n')} className="text-sm text-muted-foreground" />
-           </CardContent>
-        )}
+        {/* Removed the CardContent that displayed additional node content */}
       </Card>
       {!collapsed && node.childrenIds.map(childId => (
         <TreeNodeItem key={childId} nodeId={childId} level={level + 1} />
