@@ -2,7 +2,8 @@
 "use client";
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import type { TreeData, PlanNode, NodeStatus, PlanForExecution, FetchedTask } from '@/types';
+import type { TreeData, PlanNode, PlanForExecution, FetchedTask } from '@/types';
+import { NodeStatus } from '@/types'; // Imported NodeStatus as a value
 import { createNode, addNodeToTree, updateNodeInTree, deleteNodeFromTree, getSubTreeForExecution } from '@/lib/planUtils';
 import { planDecomposition, type PlanDecompositionInput, type PlanDecompositionOutput } from '@/ai/flows/plan-decomposition';
 import { executePlan, type ExecutePlanInput, type ExecutePlanOutput } from '@/ai/flows/plan-execution';
@@ -112,7 +113,7 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       });
     }
     return newNode;
-  }, [collapsedNodes]); // Removed toggleNodeCollapse from here as direct update is safer
+  }, [collapsedNodes]); 
 
   const handleUpdateNode = useCallback((nodeId: string, updates: Partial<Omit<PlanNode, 'id' | 'parentId' | 'childrenIds' | 'createdAt'>> & { content?: string }) => {
     setTreeData(currentTreeData => updateNodeInTree(currentTreeData, nodeId, updates));
@@ -169,7 +170,7 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       setTreeData(currentTree);
        // If parent was collapsed, expand it
       if (collapsedNodes.has(nodeId)) {
-        toggleNodeCollapse(nodeId); // Now toggleNodeCollapse is defined before this
+        toggleNodeCollapse(nodeId); 
       }
 
       toast({ title: "Decomposition Complete", description: `${output.subPlans.length} sub-plans created.` });
