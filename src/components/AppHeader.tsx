@@ -57,9 +57,6 @@ export function AppHeader() {
         <h1 className="text-2xl font-bold text-primary">Plan Weaver</h1>
       </div>
       <div className="space-x-2">
-        <Button variant="outline" onClick={handleAddRootNode} title="Add New Root Plan">
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Root
-        </Button>
         <Button variant="outline" onClick={() => fileInputRef.current?.click()} title="Import Plan from JSON">
           <FileUp className="mr-2 h-4 w-4" /> Import
         </Button>
@@ -72,6 +69,9 @@ export function AppHeader() {
         />
         <Button variant="outline" onClick={handleExport} title="Export Plan to JSON">
           <FileDown className="mr-2 h-4 w-4" /> Export
+        </Button>
+        <Button variant="outline" onClick={handleAddRootNode} title="Add New Root Plan">
+          <PlusCircle className="mr-2 h-4 w-4" /> Add Root
         </Button>
       </div>
     </header>
