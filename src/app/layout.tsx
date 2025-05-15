@@ -1,20 +1,11 @@
 import type { Metadata } from 'next';
-import { Inter, Roboto_Mono } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"; // Keep Toaster here for global availability
 
-const inter = Inter({
-  variable: '--font-inter',
-  subsets: ['latin'],
-});
-
-const roboto_mono = Roboto_Mono({
-  variable: '--font-roboto-mono',
-  subsets: ['latin'],
-});
-
 export const metadata: Metadata = {
-  title: 'Plan Weaver',
+  title: 'Yggdrasil',
   description: 'Visually weave and execute your plans with AI.',
 };
 
@@ -25,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${roboto_mono.variable} antialiased bg-background text-foreground`}>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased bg-background text-foreground`}>
         {children}
         <Toaster />
       </body>

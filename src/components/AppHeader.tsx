@@ -4,7 +4,7 @@ import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTree } from '@/contexts/TreeDataProvider';
-import { FileUp, FileDown, PlusCircle, BrainCircuit, RefreshCw } from 'lucide-react'; // BrainCircuit for app icon
+import { FileUp, FileDown, PlusCircle, Binary, RefreshCw } from 'lucide-react'; // Changed BrainCircuit to Binary
 
 export function AppHeader() {
   const { addNode, importTree, exportTree, fetchAndSetTreeData, isLoading } = useTree();
@@ -43,7 +43,7 @@ export function AppHeader() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'plan_weaver_export.json';
+    a.download = 'yggdrasil_export.json'; // Updated download filename
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -57,8 +57,8 @@ export function AppHeader() {
   return (
     <header className="bg-card text-card-foreground p-4 shadow-md flex items-center justify-between border-b">
       <div className="flex items-center gap-2">
-        <BrainCircuit className="h-8 w-8 text-primary" />
-        <h1 className="text-2xl font-bold text-primary">Plan Weaver</h1>
+        <Binary className="h-8 w-8 text-primary" /> 
+        <h1 className="text-2xl font-bold text-primary">Yggdrasil</h1>
       </div>
       <div className="space-x-2">
         <Button variant="outline" onClick={() => fileInputRef.current?.click()} title="Import Plan from JSON" disabled={isLoading}>
