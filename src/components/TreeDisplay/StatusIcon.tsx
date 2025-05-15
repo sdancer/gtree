@@ -2,7 +2,7 @@
 "use client";
 import React from 'react';
 import { NodeStatus } from '@/types';
-import { CheckCircle2, XCircle, Loader2, CircleSlash, GitFork, HelpCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Hourglass, CircleSlash, GitFork, HelpCircle } from 'lucide-react'; // Replaced Loader2 with Hourglass
 
 interface StatusIconProps {
   status: NodeStatus;
@@ -14,7 +14,7 @@ const StatusIcon: React.FC<StatusIconProps> = ({ status, className = "h-4 w-4" }
     case NodeStatus.Pending:
       return <CircleSlash className={`${className} text-muted-foreground`} title="Pending" />;
     case NodeStatus.Running:
-      return <Loader2 className={`${className} animate-spin text-blue-500`} title="Running" />;
+      return <Hourglass className={`${className} text-blue-500`} title="Running" />; // Changed to Hourglass, removed animate-spin
     case NodeStatus.Completed:
       return <CheckCircle2 className={`${className} text-accent`} title="Completed" />;
     case NodeStatus.Failed:
