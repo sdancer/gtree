@@ -36,10 +36,12 @@ export interface TreeData {
 export type PlanExecutionNodeData = Partial<PlanNode> & { status: NodeStatus };
 export type PlanForExecution = Record<string, PlanExecutionNodeData>;
 
-// Type for the structure of tasks fetched from the external URL
+// Type for the structure of tasks fetched from the external URL or local JSON
 export interface FetchedTask {
   uid: string;
   title: string;
   content: string;
   children: FetchedTask[];
+  status?: string; // Added status from JSON
 }
+

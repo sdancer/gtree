@@ -8,6 +8,7 @@ import { createNode, addNodeToTree, updateNodeInTree, deleteNodeFromTree, getSub
 import { planDecomposition, type PlanDecompositionInput, type PlanDecompositionOutput } from '@/ai/flows/plan-decomposition';
 import { executePlan, type ExecutePlanInput, type ExecutePlanOutput } from '@/ai/flows/plan-execution';
 import { useToast } from '@/hooks/use-toast';
+import sampleData from '@/samples/test1.json'; // Import the local JSON data
 
 interface TreeContextType {
   treeData: TreeData;
@@ -21,27 +22,13 @@ interface TreeContextType {
   exportTree: () => string;
   decomposeNodeAndUpdateTree: (nodeId: string) => Promise<void>;
   executeNodePlanAndUpdateTree: (nodeId: string) => Promise<void>;
-  fetchAndSetTreeData: () => Promise<void>;
+  fetchAndSetTreeData: () => Promise<void>; // This will still fetch from remote URL
   toggleNodeCollapse: (nodeId: string) => void;
   isNodeCollapsed: (nodeId: string) => boolean;
   collapsedNodes: Set<string>;
 }
 
 const TreeContext = createContext<TreeContextType | undefined>(undefined);
-
-const initialTreeData: TreeData = {
-  nodes: {},
-  rootNodeIds: [],
-};
-
-// Helper to initialize with a sample node
-function getInitialData(): TreeData {
-  const rootNode = createNode("My First Plan", null);
-  return {
-    nodes: { [rootNode.id]: rootNode },
-    rootNodeIds: [rootNode.id],
-  };
-}
 
 // Recursive helper to transform fetched tasks into PlanNode structure
 function processFetchedNodeRecursive(
@@ -50,8 +37,6 @@ function processFetchedNodeRecursive(
   nodesAccumulator: Record<string, PlanNode>
 ): string {
   const nodeId = fetchedNode.uid;
-  // Combine title and content from fetched data for the PlanNode content
-  // If content is empty or only whitespace, use title as the main line.
   const fetchedContent = fetchedNode.content?.trim();
   const planNodeContent = fetchedNode.title + (fetchedContent ? `\n${fetchedContent}` : '');
 
@@ -62,18 +47,62 @@ function processFetchedNodeRecursive(
     }
   }
 
+  let planStatus = NodeStatus.Pending; // Default status
+  if (fetchedNode.status) {
+    switch (fetchedNode.status.toLowerCase()) {
+      case 'done':
+        planStatus = NodeStatus.Completed;
+        break;
+      case 'in progress':
+        planStatus = NodeStatus.Running;
+        break;
+      case 'blocked':
+        planStatus = NodeStatus.Failed; // Mapping "Blocked" to "Failed"
+        break;
+      case 'pending':
+        planStatus = NodeStatus.Pending;
+        break;
+      default:
+        // Log unhandled status or keep as Pending
+        console.warn(`Unhandled status: ${fetchedNode.status} for node ${nodeId}`);
+        planStatus = NodeStatus.Pending;
+    }
+  }
+
   const now = new Date().toISOString();
   nodesAccumulator[nodeId] = {
     id: nodeId,
     content: planNodeContent,
     parentId: parentId,
     childrenIds: childrenIds,
-    status: NodeStatus.Pending, // Default status for newly fetched nodes
+    status: planStatus,
     editHistory: [{ timestamp: now, content: planNodeContent }],
     createdAt: now,
     updatedAt: now,
   };
   return nodeId;
+}
+
+// Helper to initialize with data from the imported JSON
+function getInitialData(): TreeData {
+  const newNodes: Record<string, PlanNode> = {};
+  const newRootNodeIds: string[] = [];
+  const fetchedTasks: FetchedTask[] = sampleData as FetchedTask[];
+
+  for (const rootTask of fetchedTasks) {
+    newRootNodeIds.push(processFetchedNodeRecursive(rootTask, null, newNodes));
+  }
+  
+  if (newRootNodeIds.length === 0 && Object.keys(newNodes).length === 0) {
+    // Fallback if sampleData is empty or processing fails, create a default node
+    const fallbackNode = createNode("My First Plan", null);
+    return {
+      nodes: { [fallbackNode.id]: fallbackNode },
+      rootNodeIds: [fallbackNode.id],
+    };
+  }
+  
+  return { nodes: newNodes, rootNodeIds: newRootNodeIds };
 }
 
 
@@ -103,9 +132,7 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   const handleAddNode = useCallback((parentId?: string | null, content: string = "New Node"): PlanNode => {
     const newNode = createNode(content, parentId);
     setTreeData(currentTreeData => addNodeToTree(currentTreeData, newNode));
-    // If adding a child to a collapsed node, expand the parent
     if (parentId && collapsedNodes.has(parentId)) {
-      // Directly use setCollapsedNodes here, no need to call toggleNodeCollapse in a useCallback for this specific side-effect
       setCollapsedNodes(prev => {
         const newSet = new Set(prev);
         newSet.delete(parentId);
@@ -132,19 +159,26 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const handleImportTree = useCallback((jsonData: string) => {
     try {
-      const importedData = JSON.parse(jsonData) as TreeData;
-      // Basic validation could be added here
-      setTreeData(importedData);
+      const importedTasks = JSON.parse(jsonData) as FetchedTask[]; // Expecting an array of FetchedTask
+      const newNodes: Record<string, PlanNode> = {};
+      const newRootNodeIds: string[] = [];
+      for (const rootTask of importedTasks) {
+        newRootNodeIds.push(processFetchedNodeRecursive(rootTask, null, newNodes));
+      }
+      setTreeData({ nodes: newNodes, rootNodeIds: newRootNodeIds });
       setSelectedNodeId(null);
-      setCollapsedNodes(new Set()); // Reset collapsed nodes on import
+      setCollapsedNodes(new Set());
       toast({ title: "Success", description: "Tree imported successfully." });
     } catch (error) {
       console.error("Failed to import tree:", error);
-      toast({ variant: "destructive", title: "Import Error", description: "Failed to parse JSON file." });
+      toast({ variant: "destructive", title: "Import Error", description: "Failed to parse JSON file. Expected an array of tasks." });
     }
   }, [toast]);
 
   const handleExportTree = useCallback((): string => {
+    // Export in the same FetchedTask structure for consistency, if desired,
+    // or export the internal TreeData structure. Current export is TreeData.
+    // For now, keeping the export as internal TreeData structure.
     return JSON.stringify(treeData, null, 2);
   }, [treeData]);
 
@@ -156,19 +190,26 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
 
     setIsLoading(true);
+    handleSelectNode(nodeId); // Use handleSelectNode directly
     try {
       const input: PlanDecompositionInput = { planNodeContent: nodeToDecompose.content };
+      // Optimistically set status to Running
+      setTreeData(currentTreeData => updateNodeInTree(currentTreeData, nodeId, { status: NodeStatus.Running }));
+
       const output: PlanDecompositionOutput = await planDecomposition(input);
       
-      let currentTree = treeData;
-      output.subPlans.forEach(subPlanContent => {
-        const newSubNode = createNode(subPlanContent, nodeId);
-        currentTree = addNodeToTree(currentTree, newSubNode);
+      let currentTree = treeData; // Get latest tree data
+      // Fetch the updated tree data that includes the "Running" status
+      setTreeData(prevTreeData => {
+        currentTree = prevTreeData; // Ensure currentTree is the one with "Running" status
+        output.subPlans.forEach(subPlanContent => {
+          const newSubNode = createNode(subPlanContent, nodeId);
+          currentTree = addNodeToTree(currentTree, newSubNode);
+        });
+        currentTree = updateNodeInTree(currentTree, nodeId, { status: NodeStatus.Decomposed });
+        return currentTree;
       });
       
-      currentTree = updateNodeInTree(currentTree, nodeId, { status: NodeStatus.Decomposed });
-      setTreeData(currentTree);
-       // If parent was collapsed, expand it
       if (collapsedNodes.has(nodeId)) {
         toggleNodeCollapse(nodeId); 
       }
@@ -176,14 +217,18 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       toast({ title: "Decomposition Complete", description: `${output.subPlans.length} sub-plans created.` });
     } catch (error) {
       console.error("Failed to decompose node:", error);
+      setTreeData(currentTreeData => updateNodeInTree(currentTreeData, nodeId, { status: NodeStatus.Failed })); // Revert to Failed on error
       toast({ variant: "destructive", title: "AI Error", description: "Failed to decompose plan." });
     } finally {
       setIsLoading(false);
     }
-  }, [treeData, toast, collapsedNodes, toggleNodeCollapse]);
+  }, [treeData, toast, collapsedNodes, toggleNodeCollapse, handleSelectNode]);
 
   const executeNodePlanAndUpdateTree = useCallback(async (nodeId: string) => {
     setIsLoading(true);
+    handleSelectNode(nodeId); // Use handleSelectNode directly
+    let originalStatuses: Record<string, NodeStatus> = {};
+
     try {
       const planToExecute: PlanForExecution = getSubTreeForExecution(treeData.nodes, nodeId) as PlanForExecution;
       if (Object.keys(planToExecute).length === 0) {
@@ -192,52 +237,55 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
         return;
       }
       
-      const input: ExecutePlanInput = { plan: planToExecute, startNodeId: nodeId };
-      // Mark the start node and its children as running before calling AI
-      let tempTree = treeData;
-      Object.keys(planToExecute).forEach(idInPlan => {
-        if (tempTree.nodes[idInPlan]) {
-           tempTree = updateNodeInTree(tempTree, idInPlan, { status: NodeStatus.Running });
-        }
+      // Store original statuses and set to Running
+      setTreeData(currentTreeData => {
+        let tempTree = { ...currentTreeData };
+        Object.keys(planToExecute).forEach(idInPlan => {
+          if (tempTree.nodes[idInPlan]) {
+            originalStatuses[idInPlan] = tempTree.nodes[idInPlan].status; // Store original
+            tempTree = updateNodeInTree(tempTree, idInPlan, { status: NodeStatus.Running });
+          }
+        });
+        return tempTree;
       });
-      setTreeData(tempTree);
 
-
+      const input: ExecutePlanInput = { plan: getSubTreeForExecution(treeData.nodes, nodeId) as PlanForExecution, startNodeId: nodeId }; // Ensure the plan sent to AI reflects "Running"
       const output: ExecutePlanOutput = await executePlan(input);
       
-      let currentTree = tempTree; // Use the tree that was just updated with "Running"
-      Object.entries(output).forEach(([executedNodeId, data]) => {
-        if (currentTree.nodes[executedNodeId] && typeof data === 'object' && data !== null && 'status' in data) {
-          const newStatus = (data as { status: NodeStatus }).status;
-          currentTree = updateNodeInTree(currentTree, executedNodeId, { status: newStatus });
-        }
+      setTreeData(currentTreeData => {
+        let updatedTree = { ...currentTreeData };
+        Object.entries(output).forEach(([executedNodeId, data]) => {
+          if (updatedTree.nodes[executedNodeId] && typeof data === 'object' && data !== null && 'status' in data) {
+            const newStatus = (data as { status: NodeStatus }).status;
+            updatedTree = updateNodeInTree(updatedTree, executedNodeId, { status: newStatus });
+          }
+        });
+        return updatedTree;
       });
-      setTreeData(currentTree);
 
       toast({ title: "Execution Update", description: "Plan execution statuses updated." });
     } catch (error) {
       console.error("Failed to execute plan:", error);
-      toast({ variant: "destructive", title: "AI Error", description: "Failed to execute plan." });
-       // Revert status if AI fails for nodes that were set to Running
-      let revertTree = treeData; 
-      const planToRevert: PlanForExecution = getSubTreeForExecution(treeData.nodes, nodeId) as PlanForExecution; 
-      
-      Object.keys(planToRevert).forEach(idInPlan => {
-        const nodeBeforeAttempt = treeData.nodes[idInPlan]; 
-        if (nodeBeforeAttempt && revertTree.nodes[idInPlan] && revertTree.nodes[idInPlan].status === NodeStatus.Running) {
-          const originalStatus = nodeBeforeAttempt.editHistory.length > 1 && nodeBeforeAttempt.status !== NodeStatus.Running 
-                               ? nodeBeforeAttempt.status 
-                               : NodeStatus.Pending;
-          revertTree = updateNodeInTree(revertTree, idInPlan, { status: originalStatus });
-        }
+      // Revert to original statuses on error
+      setTreeData(currentTreeData => {
+         let revertTree = { ...currentTreeData };
+         Object.keys(originalStatuses).forEach(idInPlan => {
+           if (revertTree.nodes[idInPlan] && originalStatuses[idInPlan]) {
+             revertTree = updateNodeInTree(revertTree, idInPlan, { status: originalStatuses[idInPlan] });
+           } else if (revertTree.nodes[idInPlan]) {
+             // If somehow original status wasn't captured but node was set to running, set to failed
+             revertTree = updateNodeInTree(revertTree, idInPlan, { status: NodeStatus.Failed });
+           }
+         });
+         return revertTree;
       });
-      setTreeData(revertTree);
+      toast({ variant: "destructive", title: "AI Error", description: "Failed to execute plan." });
     } finally {
       setIsLoading(false);
     }
-  }, [treeData, toast]);
+  }, [treeData, toast, handleSelectNode]);
 
-  const fetchAndSetTreeData = useCallback(async () => {
+  const fetchAndSetTreeData = useCallback(async () => { // This still fetches from remote for "Refresh"
     setIsLoading(true);
     try {
       const response = await fetch('http://72.9.144.110:8000/tasks.json', { referrerPolicy: 'no-referrer' });
@@ -254,8 +302,8 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
       
       setTreeData({ nodes: newNodes, rootNodeIds: newRootNodeIds });
-      setSelectedNodeId(null); // Deselect any currently selected node
-      setCollapsedNodes(new Set()); // Reset collapsed state
+      setSelectedNodeId(null); 
+      setCollapsedNodes(new Set()); 
       toast({ title: "Data Refreshed", description: "Tasks loaded successfully from the source." });
 
     } catch (error) {
@@ -301,3 +349,6 @@ export const useTree = (): TreeContextType => {
   }
   return context;
 };
+
+
+    

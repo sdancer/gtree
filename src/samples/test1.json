@@ -1,0 +1,164 @@
+[
+  {
+    "uid": "task-1",
+    "title": "Project Alpha",
+    "content": "Main project focused on infrastructure improvements",
+    "children": [
+      {
+        "uid": "task-1-1",
+        "title": "Database Migration",
+        "content": "Migrate from MySQL to PostgreSQL",
+        "children": [
+          {
+            "uid": "task-1-1-1",
+            "title": "Schema Design",
+            "content": "Design new database schema",
+            "children": [],
+            "status": "Done"
+          },
+          {
+            "uid": "task-1-1-2",
+            "title": "Data Transfer",
+            "content": "Transfer existing data to new database",
+            "children": [
+              {
+                "uid": "task-1-1-2-1",
+                "title": "User Data",
+                "content": "Transfer user accounts and profiles",
+                "children": [],
+                "status": "Blocked"
+              },
+              {
+                "uid": "task-1-1-2-2",
+                "title": "Transaction History",
+                "content": "Transfer all transaction records",
+                "children": [],
+                "status": "Done"
+              }
+            ],
+            "status": "In Progress"
+          },
+          {
+            "uid": "task-1-1-3",
+            "title": "Testing",
+            "content": "Verify database integrity post-migration",
+            "children": [],
+            "status": "In Progress"
+          }
+        ],
+        "status": "In Progress"
+      },
+      {
+        "uid": "task-1-2",
+        "title": "Frontend Updates",
+        "content": "Update UI to work with new backend",
+        "children": [
+          {
+            "uid": "task-1-2-1",
+            "title": "Component Redesign",
+            "content": "Redesign components for better performance",
+            "children": [],
+            "status": "In Progress"
+          },
+          {
+            "uid": "task-1-2-2",
+            "title": "API Integration",
+            "content": "Connect to new API endpoints",
+            "children": [],
+            "status": "Done"
+          }
+        ],
+        "status": "Done"
+      }
+    ],
+    "status": "In Progress"
+  },
+  {
+    "uid": "task-2",
+    "title": "Project Beta",
+    "content": "Secondary project for new feature development",
+    "children": [
+      {
+        "uid": "task-2-1",
+        "title": "Market Research",
+        "content": "Research competitors and market needs",
+        "children": [],
+        "status": "In Progress"
+      },
+      {
+        "uid": "task-2-2",
+        "title": "Feature Prototyping",
+        "content": "Create working prototypes of new features",
+        "children": [
+          {
+            "uid": "task-2-2-1",
+            "title": "Mobile App",
+            "content": "Prototype for iOS and Android",
+            "children": [],
+            "status": "Pending"
+          },
+          {
+            "uid": "task-2-2-2",
+            "title": "Web Interface",
+            "content": "Prototype for web browser experience",
+            "children": [],
+            "status": "Done"
+          }
+        ],
+        "status": "Blocked"
+      }
+    ],
+    "status": "Pending"
+  },
+  {
+    "uid": "task-3",
+    "title": "Administrative Tasks",
+    "content": "General administrative tasks",
+    "children": [
+      {
+        "uid": "task-3-1",
+        "title": "Team Meetings",
+        "content": "Schedule and prepare for weekly team meetings",
+        "children": [],
+        "status": "Done"
+      },
+      {
+        "uid": "task-3-2",
+        "title": "Budget Review",
+        "content": "Quarterly budget review and planning",
+        "children": [],
+        "status": "Done"
+      },
+      {
+        "uid": "task-3-3",
+        "title": "Hiring",
+        "content": "Interview and onboard new team members",
+        "children": [
+          {
+            "uid": "task-3-3-1",
+            "title": "Job Posting",
+            "content": "Create and publish job postings",
+            "children": [],
+            "status": "Done"
+          },
+          {
+            "uid": "task-3-3-2",
+            "title": "Interviews",
+            "content": "Conduct technical and cultural interviews",
+            "children": [],
+            "status": "Pending"
+          },
+          {
+            "uid": "task-3-3-3",
+            "title": "Onboarding",
+            "content": "Prepare onboarding materials and sessions",
+            "children": [],
+            "status": "Pending"
+          }
+        ],
+        "status": "Blocked"
+      }
+    ],
+    "status": "Done"
+  }
+]
