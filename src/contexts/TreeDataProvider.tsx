@@ -83,11 +83,28 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
+  const toggleNodeCollapse = useCallback((nodeId: string) => {
+    setCollapsedNodes(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(nodeId)) {
+        newSet.delete(nodeId);
+      } else {
+        newSet.add(nodeId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const isNodeCollapsed = useCallback((nodeId: string) => {
+    return collapsedNodes.has(nodeId);
+  }, [collapsedNodes]);
+
   const handleAddNode = useCallback((parentId?: string | null, content: string = "New Node"): PlanNode => {
     const newNode = createNode(content, parentId);
     setTreeData(currentTreeData => addNodeToTree(currentTreeData, newNode));
     // If adding a child to a collapsed node, expand the parent
     if (parentId && collapsedNodes.has(parentId)) {
+      // Directly use setCollapsedNodes here, no need to call toggleNodeCollapse in a useCallback for this specific side-effect
       setCollapsedNodes(prev => {
         const newSet = new Set(prev);
         newSet.delete(parentId);
@@ -95,7 +112,7 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       });
     }
     return newNode;
-  }, [collapsedNodes]);
+  }, [collapsedNodes]); // Removed toggleNodeCollapse from here as direct update is safer
 
   const handleUpdateNode = useCallback((nodeId: string, updates: Partial<Omit<PlanNode, 'id' | 'parentId' | 'childrenIds' | 'createdAt'>> & { content?: string }) => {
     setTreeData(currentTreeData => updateNodeInTree(currentTreeData, nodeId, updates));
@@ -152,7 +169,7 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       setTreeData(currentTree);
        // If parent was collapsed, expand it
       if (collapsedNodes.has(nodeId)) {
-        toggleNodeCollapse(nodeId);
+        toggleNodeCollapse(nodeId); // Now toggleNodeCollapse is defined before this
       }
 
       toast({ title: "Decomposition Complete", description: `${output.subPlans.length} sub-plans created.` });
@@ -162,7 +179,7 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     } finally {
       setIsLoading(false);
     }
-  }, [treeData, toast, collapsedNodes]);
+  }, [treeData, toast, collapsedNodes, toggleNodeCollapse]);
 
   const executeNodePlanAndUpdateTree = useCallback(async (nodeId: string) => {
     setIsLoading(true);
@@ -201,13 +218,16 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       console.error("Failed to execute plan:", error);
       toast({ variant: "destructive", title: "AI Error", description: "Failed to execute plan." });
        // Revert status if AI fails for nodes that were set to Running
-      let revertTree = treeData;
-      const planToRevert: PlanForExecution = getSubTreeForExecution(treeData.nodes, nodeId) as PlanForExecution;
+      let revertTree = treeData; 
+      const planToRevert: PlanForExecution = getSubTreeForExecution(treeData.nodes, nodeId) as PlanForExecution; 
+      
       Object.keys(planToRevert).forEach(idInPlan => {
-        if (revertTree.nodes[idInPlan] && revertTree.nodes[idInPlan].status === NodeStatus.Running) {
-          // Revert to previous status or pending. For simplicity, revert to Pending.
-          const originalNode = treeData.nodes[idInPlan]; 
-          revertTree = updateNodeInTree(revertTree, idInPlan, { status: originalNode?.editHistory.length > 1 ? originalNode.status : NodeStatus.Pending });
+        const nodeBeforeAttempt = treeData.nodes[idInPlan]; 
+        if (nodeBeforeAttempt && revertTree.nodes[idInPlan] && revertTree.nodes[idInPlan].status === NodeStatus.Running) {
+          const originalStatus = nodeBeforeAttempt.editHistory.length > 1 && nodeBeforeAttempt.status !== NodeStatus.Running 
+                               ? nodeBeforeAttempt.status 
+                               : NodeStatus.Pending;
+          revertTree = updateNodeInTree(revertTree, idInPlan, { status: originalStatus });
         }
       });
       setTreeData(revertTree);
@@ -219,7 +239,7 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   const fetchAndSetTreeData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://72.9.144.110:8000/tasks.json');
+      const response = await fetch('http://72.9.144.110:8000/tasks.json', { referrerPolicy: 'no-referrer' });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -249,21 +269,6 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, [toast]);
 
-  const toggleNodeCollapse = useCallback((nodeId: string) => {
-    setCollapsedNodes(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(nodeId)) {
-        newSet.delete(nodeId);
-      } else {
-        newSet.add(nodeId);
-      }
-      return newSet;
-    });
-  }, []);
-
-  const isNodeCollapsed = useCallback((nodeId: string) => {
-    return collapsedNodes.has(nodeId);
-  }, [collapsedNodes]);
 
   return (
     <TreeContext.Provider value={{ 
