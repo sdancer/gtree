@@ -1,7 +1,9 @@
+
 import { NodeStatus, type PlanNode, type TreeData, type EditRecord } from '@/types';
 
 export function generateNodeId(): string {
-  return crypto.randomUUID();
+  // Fallback for environments where crypto.randomUUID is not available
+  return `${Date.now().toString(36)}-${Math.random().toString(36).substring(2)}`;
 }
 
 export function createNode(
