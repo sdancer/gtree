@@ -4,36 +4,80 @@ import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTree } from '@/contexts/TreeDataProvider';
-import { FileUp, FileDown, PlusCircle, Binary, RefreshCw } from 'lucide-react'; // Changed BrainCircuit to Binary
+import { FileUp, FileDown, PlusCircle, Binary, RefreshCw, ClipboardPaste } from 'lucide-react'; // Added ClipboardPaste
+import { useToast } from '@/hooks/use-toast';
 
 export function AppHeader() {
   const { addNode, importTree, exportTree, fetchAndSetTreeData, isLoading } = useTree();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const handleAddRootNode = () => {
-    const newNode = addNode(null, "New Root Plan");
-    // Optionally, select the new node
-    // selectNode(newNode.id);
+    addNode(null, "New Root Plan");
   };
 
-  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportFromFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
           const content = e.target?.result as string;
-          importTree(content);
+          importTree(content); // importTree handles its own toast messages for success/failure
         } catch (error) {
           console.error("Error reading file:", error);
-          // Toast error handled in context
+          toast({
+            variant: "destructive",
+            title: "File Read Error",
+            description: "Could not read the selected file.",
+          });
         }
       };
+      reader.onerror = () => {
+        toast({
+          variant: "destructive",
+          title: "File Read Error",
+          description: "Failed to read the file.",
+        });
+      };
       reader.readAsText(file);
-      // Reset file input value to allow importing the same file again
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+    }
+  };
+
+  const handleImportFromClipboard = async () => {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      toast({
+        variant: "destructive",
+        title: "Clipboard Error",
+        description: "Clipboard API not available in this browser.",
+      });
+      return;
+    }
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text.trim() === "") {
+        toast({
+          variant: "destructive",
+          title: "Clipboard Empty",
+          description: "Nothing to import from clipboard.",
+        });
+        return;
+      }
+      importTree(text); // importTree handles its own toast messages for success/failure of parsing
+    } catch (err) {
+      console.error('Failed to read clipboard contents: ', err);
+      let description = "Could not read from clipboard.";
+      if (err instanceof Error && (err.name === 'NotAllowedError' || err.message.includes('permission'))) {
+        description = "Clipboard permission denied. Please allow access in your browser settings.";
+      }
+      toast({
+        variant: "destructive",
+        title: "Clipboard Read Error",
+        description: description,
+      });
     }
   };
 
@@ -43,11 +87,12 @@ export function AppHeader() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'yggdrasil_export.json'; // Updated download filename
+    a.download = 'yggdrasil_export.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    toast({ title: "Export Successful", description: "Tree data downloaded as yggdrasil_export.json."});
   };
 
   const handleRefresh = () => {
@@ -61,15 +106,18 @@ export function AppHeader() {
         <h1 className="text-2xl font-bold text-primary">Yggdrasil</h1>
       </div>
       <div className="space-x-2">
-        <Button variant="outline" onClick={() => fileInputRef.current?.click()} title="Import Plan from JSON" disabled={isLoading}>
-          <FileUp className="mr-2 h-4 w-4" /> Import
+        <Button variant="outline" onClick={handleImportFromClipboard} title="Import Plan from Clipboard" disabled={isLoading}>
+          <ClipboardPaste className="mr-2 h-4 w-4" /> Paste
+        </Button>
+        <Button variant="outline" onClick={() => fileInputRef.current?.click()} title="Import Plan from JSON file" disabled={isLoading}>
+          <FileUp className="mr-2 h-4 w-4" /> Import File
         </Button>
         <Input
           type="file"
           ref={fileInputRef}
           className="hidden"
           accept=".json"
-          onChange={handleImport}
+          onChange={handleImportFromFile}
           disabled={isLoading}
         />
         <Button variant="outline" onClick={handleExport} title="Export Plan to JSON" disabled={isLoading}>
