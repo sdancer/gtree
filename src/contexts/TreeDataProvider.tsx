@@ -288,7 +288,7 @@ export const TreeDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   const fetchAndSetTreeData = useCallback(async () => { // This still fetches from remote for "Refresh"
     setIsLoading(true);
     try {
-      const response = await fetch('http://72.9.144.110:8000/tasks.json', { referrerPolicy: 'no-referrer' });
+      const response = await fetch('http://192.168.0.105:8000/tasks.json', { referrerPolicy: 'no-referrer' });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
